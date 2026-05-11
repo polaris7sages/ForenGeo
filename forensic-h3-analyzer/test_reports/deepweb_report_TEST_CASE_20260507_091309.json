@@ -1,0 +1,168 @@
+{
+  "case_id": "TEST_CASE",
+  "generated_at": "2026-05-07T09:13:09.057523",
+  "sections": {
+    "tor_analysis": [],
+    "onion_domains": [
+      {
+        "id": 1,
+        "onion_url": "abcdefghijklmnop.onion",
+        "title": null,
+        "description": null,
+        "category": null,
+        "first_discovered": "2026-05-07T08:42:50.917669",
+        "last_seen": "2026-05-07T09:13:09.045120",
+        "status": "active",
+        "h3_index": null
+      }
+    ],
+    "crypto_transactions": [
+      {
+        "id": 1,
+        "address": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjh",
+        "currency": "bitcoin",
+        "amount": null,
+        "timestamp": "2026-05-07T08:44:54.702105",
+        "tx_hash": null,
+        "source": null,
+        "h3_index": null
+      },
+      {
+        "id": 2,
+        "address": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjh",
+        "currency": "bitcoin",
+        "amount": null,
+        "timestamp": "2026-05-07T08:45:38.138780",
+        "tx_hash": null,
+        "source": null,
+        "h3_index": null
+      },
+      {
+        "id": 3,
+        "address": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjh",
+        "currency": "bitcoin",
+        "amount": null,
+        "timestamp": "2026-05-07T08:45:56.550533",
+        "tx_hash": null,
+        "source": null,
+        "h3_index": null
+      },
+      {
+        "id": 4,
+        "address": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjh",
+        "currency": "bitcoin",
+        "amount": null,
+        "timestamp": "2026-05-07T09:13:09.048250",
+        "tx_hash": null,
+        "source": null,
+        "h3_index": null
+      }
+    ],
+    "marketplace_data": [
+      {
+        "id": 1,
+        "market_name": null,
+        "product_name": "VPN",
+        "price": 29.99,
+        "currency": "USD",
+        "category": null,
+        "vendor": null,
+        "timestamp": "2026-05-07T08:41:54.215250",
+        "h3_index": null
+      },
+      {
+        "id": 2,
+        "market_name": null,
+        "product_name": "VPN",
+        "price": 29.99,
+        "currency": "USD",
+        "category": null,
+        "vendor": null,
+        "timestamp": "2026-05-07T08:42:50.923105",
+        "h3_index": null
+      },
+      {
+        "id": 3,
+        "market_name": null,
+        "product_name": "VPN",
+        "price": 29.99,
+        "currency": "USD",
+        "category": null,
+        "vendor": null,
+        "timestamp": "2026-05-07T08:44:54.707201",
+        "h3_index": null
+      },
+      {
+        "id": 4,
+        "market_name": null,
+        "product_name": "VPN",
+        "price": 29.99,
+        "currency": "USD",
+        "category": null,
+        "vendor": null,
+        "timestamp": "2026-05-07T08:45:38.143631",
+        "h3_index": null
+      },
+      {
+        "id": 5,
+        "market_name": null,
+        "product_name": "VPN",
+        "price": 29.99,
+        "currency": "USD",
+        "category": null,
+        "vendor": null,
+        "timestamp": "2026-05-07T08:45:56.555076",
+        "h3_index": null
+      },
+      {
+        "id": 6,
+        "market_name": null,
+        "product_name": "VPN",
+        "price": 29.99,
+        "currency": "USD",
+        "category": null,
+        "vendor": null,
+        "timestamp": "2026-05-07T09:13:09.051798",
+        "h3_index": null
+      }
+    ],
+    "identity_correlations": [
+      {
+        "id": 1,
+        "clearnet_identity": "john_doe",
+        "darknet_identity": "john_doe",
+        "correlation_type": "username_match,email_match",
+        "confidence": 0.8500000000000001,
+        "evidence": "{\"clearnet\": {\"username\": \"john_doe\", \"email\": \"john@example.com\", \"ip\": \"192.168.1.1\"}, \"darknet\": {\"username\": \"john_doe\", \"email\": \"john@example.com\", \"ip\": \"185.220.101.1\"}}",
+        "timestamp": "2026-05-07T08:44:54.710958"
+      },
+      {
+        "id": 2,
+        "clearnet_identity": "john_doe",
+        "darknet_identity": "john_doe",
+        "correlation_type": "username_match,email_match",
+        "confidence": 0.8500000000000001,
+        "evidence": "{\"clearnet\": {\"username\": \"john_doe\", \"email\": \"john@example.com\", \"ip\": \"192.168.1.1\"}, \"darknet\": {\"username\": \"john_doe\", \"email\": \"john@example.com\", \"ip\": \"185.220.101.1\"}}",
+        "timestamp": "2026-05-07T08:45:38.147646"
+      },
+      {
+        "id": 3,
+        "clearnet_identity": "john_doe",
+        "darknet_identity": "john_doe",
+        "correlation_type": "username_match,email_match",
+        "confidence": 0.8500000000000001,
+        "evidence": "{\"clearnet\": {\"username\": \"john_doe\", \"email\": \"john@example.com\", \"ip\": \"192.168.1.1\"}, \"darknet\": {\"username\": \"john_doe\", \"email\": \"john@example.com\", \"ip\": \"185.220.101.1\"}}",
+        "timestamp": "2026-05-07T08:45:56.557607"
+      },
+      {
+        "id": 4,
+        "clearnet_identity": "john_doe",
+        "darknet_identity": "john_doe",
+        "correlation_type": "username_match,email_match",
+        "confidence": 0.8500000000000001,
+        "evidence": "{\"clearnet\": {\"username\": \"john_doe\", \"email\": \"john@example.com\", \"ip\": \"192.168.1.1\"}, \"darknet\": {\"username\": \"john_doe\", \"email\": \"john@example.com\", \"ip\": \"185.220.101.1\"}}",
+        "timestamp": "2026-05-07T09:13:09.054462"
+      }
+    ]
+  }
+}

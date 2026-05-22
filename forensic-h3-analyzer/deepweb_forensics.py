@@ -255,6 +255,20 @@ class DeepWebForensics:
 
         return results
 
+    def _detect_currency(self, address: str) -> str:
+        """Detect cryptocurrency type from address format"""
+        if re.match(r'bc1[a-zA-Z0-9]{25,34}', address):
+            return 'bitcoin'
+        elif re.match(r'1[a-km-zA-HJ-NP-Z1-9]{25,34}', address):  # Legacy BTC
+            return 'bitcoin'
+        elif re.match(r'3[a-km-zA-HJ-NP-Z1-9]{25,34}', address):  # P2SH BTC
+            return 'bitcoin'
+        elif re.match(r'0x[a-fA-F0-9]{40}', address):
+            return 'ethereum'
+        elif re.match(r'4[0-9AB][a-zA-Z0-9]{93}', address):
+            return 'monero'
+        return None
+
     def _store_crypto_address(self, address: str, currency: str):
         """Store cryptocurrency address"""
         cursor = self.conn.cursor()
@@ -264,15 +278,76 @@ class DeepWebForensics:
         """, (address, currency, datetime.now().isoformat()))
         self.conn.commit()
 
+    def _store_crypto_transaction(self, address: str, currency: str, amount: float, timestamp: str, tx_hash: str, source: str):
+        """Store detailed crypto transaction"""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT OR IGNORE INTO crypto_transactions (address, currency, amount, timestamp, tx_hash, source)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (address, currency, amount, timestamp, tx_hash, source))
+        self.conn.commit()
+
     def correlate_crypto_transactions(self, address: str) -> Dict[str, any]:
-        """Correlate cryptocurrency transactions with location data"""
-        # This would integrate with blockchain explorers
-        # For now, return placeholder analysis
-        return {
+        """Correlate cryptocurrency transactions with location data using blockchain APIs"""
+        currency = self._detect_currency(address)
+        if not currency:
+            return {'error': 'Unknown cryptocurrency address format'}
+
+        results = {
             'address': address,
+            'currency': currency,
             'transactions': [],
-            'analysis': 'Blockchain correlation requires external API integration'
+            'analysis': {}
         }
+
+        try:
+            if currency == 'bitcoin':
+                # Use BlockCypher API (free tier available)
+                api_url = f"https://api.blockcypher.com/v1/btc/main/addrs/{address}/full"
+                response = requests.get(api_url, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    results['transactions'] = data.get('txs', [])[:10]  # Limit to recent 10
+                    results['balance'] = data.get('balance', 0) / 1e8  # Convert satoshis to BTC
+                    results['total_received'] = data.get('total_received', 0) / 1e8
+                    results['total_sent'] = data.get('total_sent', 0) / 1e8
+                else:
+                    results['analysis']['error'] = f"BlockCypher API error: {response.status_code}"
+
+            elif currency == 'ethereum':
+                # Use Etherscan API (requires API key, but free tier)
+                # Note: In production, get a free API key from etherscan.io
+                api_key = os.getenv('ETHERSCAN_API_KEY', '')  # Set environment variable
+                if api_key:
+                    api_url = f"https://api.etherscan.io/api?module=account&action=txlist&address={address}&startblock=0&endblock=99999999&sort=desc&apikey={api_key}"
+                    response = requests.get(api_url, timeout=10)
+                    if response.status_code == 200:
+                        data = response.json()
+                        if data.get('status') == '1':
+                            results['transactions'] = data.get('result', [])[:10]
+                            # Calculate balance (would need separate balance API call)
+                        else:
+                            results['analysis']['error'] = data.get('message', 'Etherscan API error')
+                    else:
+                        results['analysis']['error'] = f"Etherscan API error: {response.status_code}"
+                else:
+                    results['analysis']['note'] = 'Etherscan API key not configured. Set ETHERSCAN_API_KEY environment variable.'
+
+            elif currency == 'monero':
+                # Monero blockchain is private, harder to query publicly
+                results['analysis']['note'] = 'Monero transactions require specialized blockchain explorer or node access.'
+
+            # Store enhanced transaction data
+            if results['transactions']:
+                for tx in results['transactions'][:5]:  # Store first 5
+                    self._store_crypto_transaction(address, currency, tx.get('value', 0), 
+                                                 tx.get('time', datetime.now().isoformat()), 
+                                                 tx.get('hash', ''), 'blockchain_api')
+
+        except Exception as e:
+            results['analysis']['error'] = f"Blockchain API error: {str(e)}"
+
+        return results
 
     # DARK WEB MARKETPLACE ANALYSIS
     def analyze_marketplace_content(self, content: str) -> Dict[str, any]:
@@ -523,6 +598,52 @@ class DeepWebForensics:
         """Close database connection"""
         if self.conn:
             self.conn.close()
+
+    # REPORT GENERATION
+    def generate_deepweb_report(self, case_id: str, output_dir: str = "reports") -> str:
+        """Generate comprehensive deep web forensics report"""
+        os.makedirs(output_dir, exist_ok=True)
+        report_path = os.path.join(output_dir, f"deepweb_report_{case_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+
+        report = {
+            'case_id': case_id,
+            'generated_at': datetime.now().isoformat(),
+            'sections': {}
+        }
+
+        # Tor analysis
+        tor_data = pd.read_sql("SELECT * FROM tor_analysis", self.conn).to_dict('records')
+        report['sections']['tor_analysis'] = tor_data
+
+        # Onion domains
+        onion_data = pd.read_sql("SELECT * FROM onion_domains", self.conn).to_dict('records')
+        report['sections']['onion_domains'] = onion_data
+
+        # Crypto transactions
+        crypto_data = pd.read_sql("SELECT * FROM crypto_transactions", self.conn).to_dict('records')
+        report['sections']['crypto_transactions'] = crypto_data
+
+        # Marketplace data
+        market_data = pd.read_sql("SELECT * FROM marketplace_data", self.conn).to_dict('records')
+        report['sections']['marketplace_data'] = market_data
+
+        # Identity correlations
+        correlation_data = pd.read_sql("SELECT * FROM identity_correlations", self.conn).to_dict('records')
+        report['sections']['identity_correlations'] = correlation_data
+
+        # Summary statistics
+        report['summary'] = {
+            'total_tor_nodes': len(tor_data),
+            'total_onion_domains': len(onion_data),
+            'total_crypto_addresses': len(crypto_data),
+            'total_marketplace_items': len(market_data),
+            'total_correlations': len(correlation_data)
+        }
+
+        with open(report_path, 'w') as f:
+            json.dump(report, f, indent=2)
+
+        return report_path
 
 # Integration with main ForensicH3Analyzer
 def integrate_deepweb_forensics(analyzer: ForensicH3Analyzer, deepweb_analyzer: DeepWebForensics):

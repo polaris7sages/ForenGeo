@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox, simpledialog
 import folium
 import webbrowser
 import tempfile
@@ -145,7 +145,7 @@ class FH3GUI:
         )
 
         if files:
-            case_id = tk.simpledialog.askstring("Case ID", "Enter case ID:")
+            case_id = simpledialog.askstring("Case ID", "Enter case ID:")
             if case_id:
                 for f in files:
                     self.indexer.add_with_hash(f, case_id)
@@ -263,7 +263,7 @@ class FH3GUI:
             messagebox.showerror("Error", "Please load a database first")
             return
 
-        address = tk.simpledialog.askstring("Geocode", "Enter address:")
+        address = simpledialog.askstring("Geocode", "Enter address:")
         if address:
             lat, lon = self.indexer.geocode_address(address)
             if lat and lon:
@@ -281,8 +281,8 @@ class FH3GUI:
         try:
             lat = float(self.lat_var.get())
             lon = float(self.lon_var.get())
-            radius = int(tk.simpledialog.askstring("POI Search", "Enter radius (meters):") or "1000")
-            poi_type = tk.simpledialog.askstring("POI Search", "Enter POI type (amenity, shop, etc.):") or "amenity"
+            radius = int(simpledialog.askstring("POI Search", "Enter radius (meters):") or "1000")
+            poi_type = simpledialog.askstring("POI Search", "Enter POI type (amenity, shop, etc.):") or "amenity"
 
             pois = self.indexer.search_poi_nearby(lat, lon, radius, poi_type)
 
@@ -307,7 +307,12 @@ class FH3GUI:
         )
         if output_file:
             self.indexer.create_interactive_map(device_id, output_file)
-            messagebox.showinfo("Success", f"Map saved to {output_file}")
+            # Preview in browser
+            try:
+                webbrowser.open(f'file://{output_file}')
+            except:
+                pass  # Browser open failed, but file was saved
+            messagebox.showinfo("Success", f"Map saved to {output_file} and opened in browser")
 
     def export_kml(self):
         if not self.indexer:
@@ -365,14 +370,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
-    def show_hotspots(self):
-        # Similar to map but with heatmap
-        pass  # Implementation similar to show_map with folium.HeatMap
-    
-    def run(self):
-        self.root.mainloop()
-
-if __name__ == "__main__":
-    app = FH3GUI()
-    app.run()

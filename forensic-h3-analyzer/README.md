@@ -25,6 +25,9 @@ ForenGeo uses H3's hierarchical hexagonal grid system to provide unique geospati
 - **Reverse Geocoding**: Convert coordinates to addresses (Nominatim)
 - **POI Search**: Find points of interest via Overpass API
 - **Address Geocoding**: Convert addresses to coordinates
+- **Phone OSINT**: Extract and classify Indian + international phone numbers from text and artifacts
+- **Phone Enrichment**: Carrier, country, type, and risk profiling for phone contacts
+- **Entity Graph Extraction**: Build Maltego-style entity relationships from text, phones, IPs, domains, and locations
 - **Weather Integration**: Location-based weather data (API key required)
 - **Privacy Assessment**: Risk analysis of location tracking
 
@@ -35,6 +38,9 @@ ForenGeo uses H3's hierarchical hexagonal grid system to provide unique geospati
 - **Dark Web Marketplace Monitoring**: Product and vendor analysis
 - **Identity Correlation**: Clearnet/darknet identity linking
 - **Dark Web Content Analysis**: Comprehensive forensic examination
+- **Phone Number OSINT**: Indian + international phone extraction, carrier/country classification, and enriched metadata
+- **Android Artifact Inspection**: SMS, call history, IMEI, Android ID, and forensic artifact analysis
+- **Linux Log Forensics**: Suspicious login, SSH/cron/systemd, and phone-related evidence extraction
 
 ### 📊 **Daily Life Applications**
 - **Movement Pattern Analysis**: Detect home/work locations
@@ -43,17 +49,129 @@ ForenGeo uses H3's hierarchical hexagonal grid system to provide unique geospati
 - **Hotspot Detection**: Identify frequently visited locations
 - **Temporal Clustering**: Analyze activity by time of day/week
 
-## 🚀 Installation
+### 🗺️ **Advanced Map Visualizations** (NEW!)
+- **Multi-Layer Maps**: Heatmaps + hexagons + markers + timeline in one view
+- **Density Heatmaps**: Color-coded location concentration visualization
+- **H3 Hexagon Maps**: Interactive hexagon grid with visit counts
+- **Clustered Markers**: Auto-zoom clustering for large datasets
+- **Trajectory Maps**: Movement path visualization with start/end markers
+- **Device Comparison**: Overlay multiple devices for correlation analysis
+- **OSINT Entity Maps**: Plot extracted entities and relationships on geospatial maps
+
+### 🌐 **Web Interface** (NEW!)
+- **Modern Web UI**: Professional dashboard at http://localhost:5000
+- **Interactive Maps**: Generate maps directly from browser
+- **Real-time API**: RESTful endpoints for all analysis functions
+- **OSINT Endpoints**: Phone extraction, phone enrichment, entity analysis, and graph export
+- **Live Statistics**: Database stats and device information
+- **Map Export**: Download high-quality HTML map files
+
+## ⚙️ Configuration
+
+### API Keys Setup
+For enhanced OSINT features, set up the following environment variables:
 
 ```bash
-git clone https://github.com/polaris7sages/forensic-h3-analyzer.git
-cd forensic-h3-analyzer
-pip install -r requirements.txt
+# OpenWeatherMap API (for weather data)
+export OPENWEATHER_API_KEY="your_api_key_here"
+
+# Etherscan API (for Ethereum blockchain analysis)
+export ETHERSCAN_API_KEY="your_api_key_here"
 ```
+
+Get API keys from:
+- [OpenWeatherMap](https://openweathermap.org/api) (free tier available)
+- [Etherscan](https://etherscan.io/apis) (free tier available)
+
+## 🔐 DevSecOps & Secure Delivery
+
+ForenGeo now includes a secure development lifecycle that keeps quality, security, and deployment checks repeatable and automated.
+
+Key DevSecOps assets included in this repository:
+- `.github/workflows/ci.yml` for automated build, lint, test, and security scanning on push/PR
+- `requirements-dev.txt` for reproducible developer tooling
+- `test_devsecops.py` for deterministic local unit coverage
+- `DemoDevSecOps` workflow with `demo_devsecops.py` to verify functionality and map generation
+- `Dockerfile` hardened with a non-root runtime user and minimal image build
+- `.gitignore` and `.dockerignore` to keep temporary artifacts out of source control and containers
+
+How to run the DevSecOps workflow locally:
+
+```bash
+python3 -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pytest -q test_devsecops.py
+python3 demo_devsecops.py
+```
+
+Build a container for staging or deployment:
+
+```bash
+docker build -t forengeo .
+docker run --rm -p 5000:5000 forengeo
+```
+
+## �🛠️ Troubleshooting
+
+### Common Issues
+
+**H3 Installation Issues**
+```bash
+# If H3 fails to install on some systems
+pip install h3 --no-binary h3
+```
+
+**Database Errors**
+- Ensure write permissions in the working directory
+- Delete `.fh3.db` and `deepweb.db` if corrupted and re-run `fh3 init`
+
+**API Rate Limits**
+- OSINT features use free APIs with rate limits
+- Wait a few minutes between requests or get premium API keys
+
+**Geocoding Failures**
+- Nominatim has rate limits; consider using Google Maps API for production
+- Check internet connection
+
+**Deep Web Analysis**
+- Regex-based detection; may have false positives
+- Blockchain APIs require internet and may have limits
+
+**GUI Issues**
+- Ensure Tkinter is installed (`apt install python3-tk` on Ubuntu)
+- For map previews, ensure a web browser is available
+
+### Performance Tips
+- Use H3 resolution 9-10 for balance of accuracy and performance
+- Index large datasets before analysis
+- Close database connections after use
+
+### Getting Help
+- Check test outputs in `test_reports/`
+- Run individual tests: `python test_forengeo.py`
+- For deep web: `python test_deepweb.py`
+- View comprehensive feature guide: `FEATURES.md`
+- Quick start guide: `QUICKSTART.md`
+- Run feature demo: `python3 demo_all_features.py`
 
 ## 📖 Usage
 
-### CLI Commands (git-like interface)
+### 🌐 Web Interface (Recommended for Most Users)
+```bash
+# Start the web UI
+python3 fh3_web.py
+
+# Access in your browser at http://localhost:5000
+# Features:
+# - Interactive map generation (6 types)
+# - Spatial queries
+# - Hotspot analysis
+# - Deep web forensics
+# - Real-time statistics
+```
+
+### 💻 CLI Commands (git-like interface)
 
 ```bash
 # Initialize database
@@ -75,9 +193,23 @@ pip install -r requirements.txt
 ./fh3_cli.py revgeo 40.7128 -74.0060
 ./fh3_cli.py geocode "1600 Pennsylvania Avenue, Washington DC"
 ./fh3_cli.py poi 40.7128 -74.0060 --radius 500 --type amenity
+./fh3_cli.py extract-phone --text "+91 98765 43210 or +1-202-555-0143"
+./fh3_cli.py phone-osint --phone "+91 98765 43210"
+./fh3_cli.py phone-osint --text "Contact +1-202-555-0143 from India"
+./fh3_cli.py osint --file suspicious_text.txt --case OSINT2026
+./fh3_cli.py export-graph --output entity_graph.json
+./fh3_cli.py entity-map --output entity_map.html
+
+# Android/Linux forensics
+./fh3_cli.py android android_artifact.db --case ANDROID123
+./fh3_cli.py linux /var/log/auth.log --keywords ssh login cron
 
 # Export options
-./fh3_cli.py map --device iPhone123 --output case_map.html
+./fh3_cli.py map --device iPhone123 --output case_map.html --type multi
+./fh3_cli.py map --device iPhone123 --type heatmap --output heatmap.html
+./fh3_cli.py map --device iPhone123 --type trajectory --output path.html
+./fh3_cli.py map --device iPhone123 --type comparison --output all_devices.html
+./fh3_cli.py map --device iPhone123 --type osint --output entity_map.html
 ./fh3_cli.py kml --device iPhone123 --output locations.kml
 ./fh3_cli.py status
 ./fh3_cli.py export --case MURDER2024 exported_data
@@ -89,8 +221,26 @@ pip install -r requirements.txt
 ./fh3_cli.py correlate-darkweb iPhone123
 ```
 
-### Server API
-- `python fh3_server.py` runs a Flask API on port `5000`
+### Web Interfaces
+
+#### Modern Web Dashboard (NEW!)
+```bash
+python3 fh3_web.py
+# Access at http://localhost:5000
+# Features:
+# - Professional UI for all operations
+# - Interactive map generation
+# - Real-time queries and analysis
+# - OSINT phone and entity analysis
+# - Entity graph export and map generation
+# - Database statistics
+# - Map file downloads
+```
+
+#### Server API (Legacy)
+```bash
+python3 fh3_server.py
+```
 - `GET /query/<lat>/<lon>/<radius>` returns matching locations
 - `GET /status` returns database statistics
 - `GET /hotspots?device=<id>&days=30` returns hotspot counts

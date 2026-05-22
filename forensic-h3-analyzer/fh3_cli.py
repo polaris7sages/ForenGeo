@@ -4,6 +4,7 @@
 """
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
@@ -105,10 +106,18 @@ class FH3CLI:
             print(f"- {poi['name']} ({poi['lat']:.4f}, {poi['lon']:.4f})")
         indexer.close()
 
-    def map(self, device_id=None, output='map.html'):
+    def map(self, device_id=None, output='map.html', map_type='multi'):
+        """Create interactive map with specified type"""
         indexer = self._get_indexer()
-        indexer.create_interactive_map(device_id, output)
-        indexer.close()
+        try:
+            indexer.create_interactive_map(device_id, output, map_type)
+            import webbrowser
+            webbrowser.open(f'file://{Path(output).absolute()}')
+            print(f"🌐 Map opened in default browser")
+        except Exception as e:
+            print(f"❌ Map creation failed: {e}")
+        finally:
+            indexer.close()
 
     def kml(self, device_id=None, output='locations.kml'):
         indexer = self._get_indexer()
@@ -136,6 +145,85 @@ class FH3CLI:
     def export(self, case_id, output_dir):
         indexer = self._get_indexer()
         indexer.export_autopsy_csv(case_id, output_dir)
+        indexer.close()
+
+    def extract_phone(self, content_file=None, text=None):
+        indexer = self._get_indexer()
+        content = ''
+        if content_file:
+            with open(content_file, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+        elif text:
+            content = text
+        else:
+            print('❌ Provide --file or --text for extraction')
+            return
+
+        phones = indexer.extract_phone_numbers(content)
+        print(f"📱 Found {len(phones)} phone numbers")
+        for phone in phones:
+            print(f" - {phone.get('raw')} -> {phone.get('normalized')} ({phone.get('international')})")
+        indexer.close()
+
+    def phone_osint(self, phone_number=None, content_file=None, text=None):
+        indexer = self._get_indexer()
+        if phone_number:
+            result = indexer.phone_osint_lookup(phone_number)
+        else:
+            content = ''
+            if content_file:
+                with open(content_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+            elif text:
+                content = text
+            else:
+                print('❌ Provide a phone number or content to enrich')
+                indexer.close()
+                return
+            result = indexer.phone_osint_enrichment(content)
+
+        print(json.dumps(result, indent=2))
+        indexer.close()
+
+    def osint_text(self, content_file=None, text=None, evidence_id=''):
+        indexer = self._get_indexer()
+        if content_file:
+            with open(content_file, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+        elif text:
+            content = text
+        else:
+            print('❌ Provide OSINT content using --file or --text')
+            indexer.close()
+            return
+
+        result = indexer.analyze_osint_text(content, evidence_id)
+        print(json.dumps(result, indent=2))
+        indexer.close()
+
+    def export_graph(self, output='entity_graph.json'):
+        indexer = self._get_indexer()
+        result = indexer.export_entity_graph_json(output)
+        print(f'📁 Graph exported to {result}')
+        indexer.close()
+
+    def entity_map(self, output='entity_map.html'):
+        indexer = self._get_indexer()
+        result = indexer.create_entity_map(output)
+        if result:
+            print(f'🗺️ Entity map created: {result}')
+        indexer.close()
+
+    def analyze_android(self, file_path, evidence_id=''):
+        indexer = self._get_indexer()
+        result = indexer.analyze_android_artifacts(file_path, evidence_id)
+        print(json.dumps(result, indent=2))
+        indexer.close()
+
+    def analyze_linux(self, file_path, evidence_id='', keywords=None):
+        indexer = self._get_indexer()
+        result = indexer.analyze_linux_artifacts(file_path, keywords or None, evidence_id)
+        print(json.dumps(result, indent=2))
         indexer.close()
 
     def analyze_deepweb(self, content_file):
@@ -261,6 +349,20 @@ def main():
     map_parser = subparsers.add_parser('map', help='Create interactive map')
     map_parser.add_argument('--device', help='Device ID')
     map_parser.add_argument('--output', default='map.html', help='Output file')
+    map_parser.add_argument('--type', choices=['multi', 'heatmap', 'hexagon', 'cluster', 'trajectory', 'comparison', 'osint'],
+                           default='multi', help='Map visualization type')
+
+    # OSINT
+    osint_parser = subparsers.add_parser('osint', help='Analyze OSINT content and extract entity relationships')
+    osint_parser.add_argument('--file', help='Path to text file to analyze')
+    osint_parser.add_argument('--text', help='Text to analyze directly')
+    osint_parser.add_argument('--case', default='', help='Evidence/case ID reference')
+
+    graph_parser = subparsers.add_parser('export-graph', help='Export OSINT entity graph JSON')
+    graph_parser.add_argument('--output', default='entity_graph.json', help='Output graph file')
+
+    entity_map_parser = subparsers.add_parser('entity-map', help='Create OSINT entity map')
+    entity_map_parser.add_argument('--output', default='entity_map.html', help='Entity map output file')
 
     # KML
     kml_parser = subparsers.add_parser('kml', help='Export to KML')
@@ -281,6 +383,24 @@ def main():
     deepweb_report_parser = subparsers.add_parser('deepweb-report', help='Generate deep web forensics report')
     deepweb_report_parser.add_argument('--case', required=True, help='Case ID')
     deepweb_report_parser.add_argument('output_dir', help='Output directory')
+
+    extract_phone_parser = subparsers.add_parser('extract-phone', help='Extract phone numbers from text or file')
+    extract_phone_parser.add_argument('--file', help='Text file to scan')
+    extract_phone_parser.add_argument('--text', help='Raw text content to scan')
+
+    phone_osint_parser = subparsers.add_parser('phone-osint', help='Enrich phone number OSINT data')
+    phone_osint_parser.add_argument('--file', help='Optional file containing phone data or content')
+    phone_osint_parser.add_argument('--text', help='Optional raw text content to scan')
+    phone_osint_parser.add_argument('--phone', help='Single phone number to enrich')
+
+    android_parser = subparsers.add_parser('android', help='Analyze Android artifact file')
+    android_parser.add_argument('file_path', help='Path to Android artifact file')
+    android_parser.add_argument('--case', default='', help='Evidence/case ID')
+
+    linux_parser = subparsers.add_parser('linux', help='Analyze Linux log or artifact file')
+    linux_parser.add_argument('file_path', help='Path to Linux log or artifact file')
+    linux_parser.add_argument('--case', default='', help='Evidence/case ID')
+    linux_parser.add_argument('--keywords', nargs='*', help='Optional keywords to highlight')
 
     correlate_parser = subparsers.add_parser('correlate-darkweb', help='Correlate locations with dark web activity')
     correlate_parser.add_argument('device_id', help='Device ID to correlate')
@@ -316,7 +436,13 @@ def main():
     elif args.command == 'poi':
         cli.poi_search(args.lat, args.lon, args.radius, args.type)
     elif args.command == 'map':
-        cli.map(args.device, args.output)
+        cli.map(args.device, args.output, args.type)
+    elif args.command == 'osint':
+        cli.osint_text(args.file, args.text, args.case)
+    elif args.command == 'export-graph':
+        cli.export_graph(args.output)
+    elif args.command == 'entity-map':
+        cli.entity_map(args.output)
     elif args.command == 'kml':
         cli.kml(args.device, args.output)
     elif args.command == 'stats':
@@ -325,6 +451,14 @@ def main():
         cli.status()
     elif args.command == 'export':
         cli.export(args.case, args.output)
+    elif args.command == 'extract-phone':
+        cli.extract_phone(args.file, args.text)
+    elif args.command == 'phone-osint':
+        cli.phone_osint(args.phone, args.file, args.text)
+    elif args.command == 'android':
+        cli.analyze_android(args.file_path, args.case)
+    elif args.command == 'linux':
+        cli.analyze_linux(args.file_path, args.case, args.keywords)
     elif args.command == 'deepweb':
         cli.analyze_deepweb(args.content_file)
     elif args.command == 'deepweb-report':

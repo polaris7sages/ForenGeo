@@ -16,6 +16,12 @@ import threading
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['JSON_SORT_KEYS'] = False
+
+DB_PATH = Path(os.getenv('FORNEGO_DB_PATH', '.fh3.db'))
+FORNEGO_HOST = os.getenv('FORNEGO_HOST', '0.0.0.0')
+FORNEGO_PORT = int(os.getenv('FORNEGO_PORT', '5000'))
+FORNEGO_DEBUG = os.getenv('FORNEGO_DEBUG', 'False').lower() in ('1', 'true', 'yes')
 
 # Thread-local storage for database connections
 _thread_local = threading.local()
@@ -24,7 +30,7 @@ def get_indexer():
     """Get or create thread-local database connection"""
     if not hasattr(_thread_local, 'indexer'):
         try:
-            _thread_local.indexer = ForensicH3Analyzer('.fh3.db')
+            _thread_local.indexer = ForensicH3Analyzer(str(DB_PATH))
         except Exception as e:
             print(f"⚠️ Warning: Could not initialize indexer: {e}")
             _thread_local.indexer = None
@@ -625,9 +631,9 @@ def serve_map(filename):
 
 if __name__ == '__main__':
     print("🚀 Starting ForenGeo Web UI...")
-    print("📡 Access the web interface at http://localhost:5000")
+    print(f"📡 Access the web interface at http://{FORNEGO_HOST}:{FORNEGO_PORT}")
     print("Press Ctrl+C to stop the server")
     try:
-        app.run(host='0.0.0.0', port=5000, debug=False)
+        app.run(host=FORNEGO_HOST, port=FORNEGO_PORT, debug=FORNEGO_DEBUG)
     except KeyboardInterrupt:
         print("\n⛔ Server stopped")

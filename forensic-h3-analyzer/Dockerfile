@@ -9,8 +9,11 @@ COPY requirements.txt ./
 RUN python -m pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
-RUN useradd --create-home --shell /bin/bash forengeo && chown -R forengeo:forengeo /app
+RUN chmod +x /app/docker-entrypoint.sh \
+    && useradd --create-home --shell /bin/bash forengeo \
+    && chown -R forengeo:forengeo /app
 USER forengeo
 
 EXPOSE 5000
-CMD ["python", "fh3_cli.py", "init"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "fh3_web:app"]

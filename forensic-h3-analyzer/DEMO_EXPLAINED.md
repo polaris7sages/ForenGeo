@@ -1,5 +1,29 @@
 # 🎯 ForenGeo - The 7 Major Strong Points Demonstrated
 
+## Project Report
+**Rashtriya Raksha University, Lucknow Campus**  
+**Project:** GEOSPATIAL INDEXING  
+**Submitted By:** Dhruv Kumar Singh  
+**Enrollment No.:** 25020111025081004  
+**Submitted To:** Mr. Akash Mishra, Assistant Professor, Digital Forensics  
+**Date:** May 2026  
+
+## Demo Abstract
+This document presents a structured project-report style demo for ForenGeo. It highlights the tool’s geospatial indexing, forensic analytics, OSINT enrichment, entity mapping, and deep web correlation capabilities.
+
+## Demo Objectives
+- Validate H3-based geospatial analysis for forensic evidence.
+- Demonstrate hotspot and anomaly detection.
+- Show phone OSINT and entity graph extraction.
+- Generate interactive maps and export forensic outputs.
+- Illustrate deep web and dark web correlation.
+
+## Disadvantages
+- Some OSINT features depend on external APIs and network availability.
+- The tool is designed for research and proof-of-concept workflows rather than enterprise forensic suites.
+- Large datasets can be constrained by SQLite performance on lower-end systems.
+- Requires Python dependencies such as H3, Pandas, and Folium.
+
 ## Quick Demo Run
 ```bash
 python3 demo_forensic_steps.py
@@ -429,6 +453,9 @@ POI Entries:                 0 (no additional POI data)
 3. **Start Web Interface**
    ```bash
    python3 fh3_web.py
+   # or run the SaaS-ready container:
+   docker build -t forengeo .
+   docker run --rm -p 5000:5000 forengeo
    # Visit http://localhost:5000
    ```
 

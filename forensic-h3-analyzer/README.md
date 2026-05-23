@@ -1,8 +1,66 @@
 # ForenGeo - Advanced H3 Forensic & OSINT Analyzer
 
-**Leveraging Uber's H3 geospatial indexing for digital forensics, open-source intelligence, and daily life analysis**
+## Project Report
+**Rashtriya Raksha University, Lucknow Campus**  
+**Project:** GEOSPATIAL INDEXING  
+**Submitted By:** Dhruv Kumar Singh  
+**Enrollment No.:** 25020111025081004  
+**Submitted To:** Mr. Akash Mishra, Assistant Professor, Digital Forensics  
+**Date:** May 2026  
 
-ForenGeo uses H3's hierarchical hexagonal grid system to provide unique geospatial analysis capabilities not found in other OSINT tools. Perfect for forensic investigators, privacy analysts, and anyone interested in location data intelligence.
+## Abstract
+ForenGeo is a Python-based digital forensics and open-source intelligence (OSINT) system built on Uber H3 geospatial indexing. It integrates evidence ingestion, spatial analysis, phone and entity OSINT, and deep web correlation into a single investigative platform.
+
+## Introduction
+ForenGeo demonstrates how advanced geospatial indexing can improve the accuracy and utility of location-based digital evidence. The system processes location logs, extracts intelligence from phone numbers, analyzes Android and Linux artifacts, and visualizes results with interactive H3 maps.
+
+## Objectives
+- Leverage Uber H3 hierarchical geospatial indexing for forensic location analysis.
+- Build an integrated forensic and OSINT workflow for mobile and web investigations.
+- Support phone number extraction, Android/Linux artifact analysis, and entity graph generation.
+- Provide multi-interface access through CLI, web UI, and Python API.
+
+## Scope
+ForenGeo focuses on local evidence analysis and correlation rather than cloud-based data collection. It supports CSV/plist evidence ingestion, SQLite-backed storage, H3 spatial querying, OSINT enrichment, and HTML map export.
+
+## Unique Contribution
+- **Native H3 geospatial indexing:** Enables scalable, hierarchical spatial queries and hotspot detection.
+- **Forensic + OSINT integration:** Combines evidence analysis, phone intelligence, and dark web correlation in one tool.
+- **Entity mapping:** Generates Maltego-style entity relationships with geospatial context.
+- **Privacy-first design:** Performs core analysis locally with optional external OSINT API use.
+
+## Methodology
+1. Ingest location and evidence data into a SQLite-backed forensic database.
+2. Convert lat/lon points to H3 indices for hierarchical spatial analysis.
+3. Perform forensic analytics including hotspots, anomalies, and movement patterns.
+4. Enrich data with OSINT features: reverse geocoding, POI search, phone number analysis, and entity extraction.
+5. Correlate findings with deep web indicators such as Tor, onion domains, and cryptocurrency addresses.
+6. Visualize output as interactive Folium maps, KML, CSV, and JSON reports.
+
+## Accuracy and Validation
+- **H3 spatial accuracy:** High precision at resolutions 12-15 with consistent hexagon neighbor calculations.
+- **Forensic accuracy:** Hotspot and anomaly detection use proven statistical methods.
+- **OSINT accuracy:** Reverse geocoding and POI search rely on OpenStreetMap for strong location coverage.
+- **Deep web accuracy:** Tor detection and cryptocurrency extraction use validated data patterns.
+
+## Advantages
+- Superior spatial analysis with H3 hierarchical indexing
+- Fast, efficient spatial queries and multi-resolution analysis
+- Integrated forensic, OSINT, and dark web analysis
+- Chain of custody support with cryptographic evidence hashes
+- Export-ready HTML maps, KML, CSV, and JSON results
+
+## Disadvantages
+- External APIs are required for some OSINT enrichment features
+- Depends on Python libraries such as H3, Pandas, and Folium
+- Not a commercial-forensic suite; intended for academic and investigative research
+- Very large datasets may be limited by SQLite performance in some environments
+
+## Execution Overview
+ForenGeo supports command-line, web UI, and Python API workflows. See the `Usage` section below for detailed commands and examples.
+
+## Results and Conclusion
+ForenGeo proves that H3 geospatial indexing enhances digital forensic investigations, providing accurate location analysis, intelligent entity mapping, and strong investigative reporting capabilities. The tool delivers a practical, privacy-focused research system for forensic professionals.
 
 ## 🌟 Key Features
 
@@ -93,6 +151,8 @@ Key DevSecOps assets included in this repository:
 - `test_devsecops.py` for deterministic local unit coverage
 - `DemoDevSecOps` workflow with `demo_devsecops.py` to verify functionality and map generation
 - `Dockerfile` hardened with a non-root runtime user and minimal image build
+- `docker-entrypoint.sh` for first-run database initialization and Gunicorn startup
+- `Procfile` included for Heroku and PaaS deployment compatibility
 - `.gitignore` and `.dockerignore` to keep temporary artifacts out of source control and containers
 
 How to run the DevSecOps workflow locally:
@@ -110,6 +170,14 @@ Build a container for staging or deployment:
 ```bash
 docker build -t forengeo .
 docker run --rm -p 5000:5000 forengeo
+```
+
+For SaaS-style deployment, the container launches a production-ready Gunicorn server from `fh3_web:app` and initializes the `.fh3.db` database automatically on first startup.
+
+Optional local compose deployment:
+
+```bash
+docker compose up --build
 ```
 
 ## �🛠️ Troubleshooting

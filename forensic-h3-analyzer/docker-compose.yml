@@ -1,0 +1,9 @@
+version: '3.9'
+services:
+  forengeo:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FORNEGO_PORT=5000
+    restart: unless-stopped

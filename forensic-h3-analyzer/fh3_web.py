@@ -510,7 +510,8 @@ def require_api_token():
     # always allow status
     if request.path == '/api/status':
         return None
-    if not API_TOKEN:
+    current_token = os.getenv('FORNEGO_API_TOKEN')
+    if not current_token:
         # no token configured -> allow access (backwards compatible)
         return None
     # check header or x-api-key
@@ -520,7 +521,7 @@ def require_api_token():
         token = auth.split(' ', 1)[1].strip()
     else:
         token = api_key
-    if not token or token != API_TOKEN:
+    if not token or token != current_token:
         return jsonify({'error': 'Unauthorized'}), 401
 
 @app.route('/api/query/<float:lat>/<float:lon>/<float:radius>')

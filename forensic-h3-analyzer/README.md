@@ -184,6 +184,20 @@ docker run --rm -p 5000:5000 \
 
 This keeps the `.fh3.db` and generated maps on your host filesystem so they survive container restarts.
 
+API authentication
+
+You can secure the API by setting an API token in the container environment variable `FORNEGO_API_TOKEN`. When set, all `/api/*` endpoints (except `/api/status`) require the token via the `Authorization: Bearer <token>` header or `X-API-KEY` header.
+
+Example Docker run with token:
+
+```bash
+docker run --rm -p 5000:5000 \
+	-e FORNEGO_API_TOKEN="mysecret" \
+	-v "$(pwd)/.fh3.db:/app/.fh3.db" \
+	-v "$(pwd)/maps:/app/maps" \
+	forengeo
+```
+
 For SaaS-style deployment, the container launches a production-ready Gunicorn server from `fh3_web:app` and initializes the `.fh3.db` database automatically on first startup.
 
 Optional local compose deployment:

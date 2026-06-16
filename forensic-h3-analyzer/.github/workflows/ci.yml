@@ -67,3 +67,10 @@ jobs:
 
       - name: Notify
         run: echo "Docker image pushed to ghcr.io/${{ github.repository_owner }}/forengeo:latest"
+
+      - name: Scan repository with Trivy (fs)
+        uses: aquasecurity/trivy-action@v1.4.0
+        with:
+          scan-type: 'fs'
+          vuln-type: 'os,library'
+          format: 'table'

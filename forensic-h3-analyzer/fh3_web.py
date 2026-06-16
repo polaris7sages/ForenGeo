@@ -22,6 +22,7 @@ DB_PATH = Path(os.getenv('FORNEGO_DB_PATH', '.fh3.db'))
 FORNEGO_HOST = os.getenv('FORNEGO_HOST', '0.0.0.0')
 FORNEGO_PORT = int(os.getenv('FORNEGO_PORT', '5000'))
 FORNEGO_DEBUG = os.getenv('FORNEGO_DEBUG', 'False').lower() in ('1', 'true', 'yes')
+API_TOKEN = os.getenv('FORNEGO_API_TOKEN')
 
 # Thread-local storage for database connections
 _thread_local = threading.local()
@@ -190,6 +191,33 @@ BASE_TEMPLATE = '''
 INDEX_TEMPLATE = BASE_TEMPLATE.replace(
     '{% block content %}{% endblock %}',
     '''
+    <div style="text-align:right;margin-bottom:10px;">
+        <button onclick="setApiToken()">Set API Token</button>
+    </div>
+
+    <script>
+        // Attach Authorization header automatically when FORNEGO token is set in localStorage
+        (function(){
+            const _fetch = window.fetch.bind(window);
+            window.fetch = function(url, opts){
+                opts = opts || {};
+                opts.headers = opts.headers || {};
+                try{
+                    const t = localStorage.getItem('FORNEGO_API_TOKEN');
+                    if(t){
+                        opts.headers['Authorization'] = 'Bearer ' + t;
+                    }
+                }catch(e){}
+                return _fetch(url, opts);
+            };
+
+            window.setApiToken = function(){
+                const t = prompt('Enter API token (will be stored in browser localStorage):');
+                if(t){ localStorage.setItem('FORNEGO_API_TOKEN', t); alert('Token saved to localStorage'); }
+            };
+        })();
+    </script>
+
     <div class="section">
         <h2>📊 Database Statistics</h2>
         <div id="stats"></div>
@@ -471,6 +499,29 @@ def status():
         return jsonify(stats)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.before_request
+def require_api_token():
+    """Require API token for /api/* endpoints if FORNEGO_API_TOKEN is set."""
+    # allow static and UI routes
+    if not request.path.startswith('/api/'):
+        return None
+    # always allow status
+    if request.path == '/api/status':
+        return None
+    if not API_TOKEN:
+        # no token configured -> allow access (backwards compatible)
+        return None
+    # check header or x-api-key
+    auth = request.headers.get('Authorization', '')
+    api_key = request.headers.get('X-API-KEY', '')
+    if auth.startswith('Bearer '):
+        token = auth.split(' ', 1)[1].strip()
+    else:
+        token = api_key
+    if not token or token != API_TOKEN:
+        return jsonify({'error': 'Unauthorized'}), 401
 
 @app.route('/api/query/<float:lat>/<float:lon>/<float:radius>')
 def query(lat, lon, radius):

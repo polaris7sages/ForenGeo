@@ -43,6 +43,10 @@ Notes & Security
 - Use strong API key management for OSINT services and do not store keys in the repo.
 - Consider adding TLS termination via a reverse proxy (NGINX) or platform-managed TLS.
 
+API Token
+
+To secure the API, set the `FORNEGO_API_TOKEN` environment variable in your deployment. When set, the app requires this token (Bearer) for `/api/*` endpoints except `/api/status`. The web UI includes a "Set API Token" button which stores the token in `localStorage` and attaches it to requests.
+
 Environment variables supported
 - `FORNEGO_DB_PATH` - path to DB (default: .fh3.db)
 - `FORNEGO_HOST` - host binding (default: 0.0.0.0)

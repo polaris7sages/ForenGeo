@@ -69,7 +69,7 @@ def main():
         print(f"   {rank}. {h3_hex} @ {lat:.4f},{lon:.4f} ({count} visits)")
 
     output_map = OUTPUT_DIR / "demo_devsecops_map.html"
-    analyzer.create_interactive_map(output_file=str(output_map), map_type="multi")
+    analyzer.create_interactive_map(output_file=str(output_map))
     print(f"🗺️ Created interactive map: {output_map}")
 
     output_export = OUTPUT_DIR / "demo_devsecops_autopsy.csv"

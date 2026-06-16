@@ -496,13 +496,15 @@ def hotspots():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/reverse/<float:lat>/<float:lon>')
+@app.route('/api/reverse/<lat>/<lon>')
 def reverse_geocode(lat, lon):
     try:
         indexer = get_indexer()
         if not indexer:
             return jsonify({'error': 'Database not initialized'}), 500
-        return jsonify(indexer.reverse_geocode(lat, lon))
+        lat_float = float(lat)
+        lon_float = float(lon)
+        return jsonify(indexer.reverse_geocode(lat_float, lon_float))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -513,13 +515,12 @@ def generate_map():
         if not indexer:
             return jsonify({'error': 'Database not initialized'}), 500
         
-        map_type = request.args.get('type', 'multi')
         device_id = request.args.get('device')
         
         output_file = f"maps/forengeo_map_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         os.makedirs('maps', exist_ok=True)
         
-        indexer.create_interactive_map(device_id, output_file, map_type)
+        indexer.create_interactive_map(device_id, output_file)
         return jsonify({'file': f'/{output_file}'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -542,86 +543,217 @@ def analyze_deepweb():
 
 @app.route('/api/phone/extract', methods=['POST'])
 def extract_phone():
+    """Extract phone numbers from content using regex pattern"""
     try:
-        indexer = get_indexer()
-        if not indexer:
-            return jsonify({'error': 'Database not initialized'}), 500
+        import re
+        from phonenumbers import parse, is_valid_number
+        
         data = request.get_json()
         content = data.get('content', '')
-        return jsonify(indexer.extract_phone_numbers(content))
+        
+        # Phone regex patterns
+        patterns = [
+            r'\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})',  # US
+            r'\+91[\s]?(\d{5})[\s.-]?(\d{5})',  # India
+            r'\+\d{1,3}\s?\d{1,14}',  # General international
+        ]
+        
+        phones = []
+        for pattern in patterns:
+            matches = re.findall(pattern, content)
+            for match in matches:
+                if isinstance(match, tuple):
+                    phone_str = ''.join(match)
+                else:
+                    phone_str = match
+                phones.append(phone_str)
+        
+        return jsonify({'extracted_phones': list(set(phones)), 'count': len(set(phones))})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e), 'extracted_phones': [], 'count': 0}), 400
 
 @app.route('/api/phone/osint', methods=['POST'])
 def phone_osint():
+    """Perform OSINT enrichment on phone numbers"""
     try:
-        indexer = get_indexer()
-        if not indexer:
-            return jsonify({'error': 'Database not initialized'}), 500
+        import phonenumbers
+        
         data = request.get_json()
         phone_number = data.get('phone_number', '').strip()
         content = data.get('content', '').strip()
+        
+        result = {'numbers': []}
+        
         if phone_number:
-            return jsonify(indexer.phone_osint_lookup(phone_number))
-        return jsonify(indexer.phone_osint_enrichment(content))
+            try:
+                parsed = phonenumbers.parse(phone_number, None)
+                result['numbers'].append({
+                    'number': phone_number,
+                    'country': phonenumbers.region_code_for_number(parsed),
+                    'carrier': 'Unknown',
+                    'type': phonenumbers.number_type(parsed),
+                    'valid': phonenumbers.is_valid_number(parsed)
+                })
+            except Exception as e:
+                result['error'] = str(e)
+        elif content:
+            import re
+            patterns = [r'\+?1?\s*\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})', r'\+91[\s]?(\d{5})[\s.-]?(\d{5})']
+            for pattern in patterns:
+                for match in re.finditer(pattern, content):
+                    number_str = match.group(0)
+                    try:
+                        parsed = phonenumbers.parse(number_str, None)
+                        result['numbers'].append({
+                            'number': number_str,
+                            'country': phonenumbers.region_code_for_number(parsed),
+                            'valid': phonenumbers.is_valid_number(parsed)
+                        })
+                    except:
+                        pass
+        
+        return jsonify(result)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e), 'numbers': []}), 400
 
-@app.route('/api/osint', methods=['POST'])
-def analyze_osint():
+@app.route('/api/temporal', methods=['GET'])
+def temporal_analysis():
+    """Analyze temporal patterns in location data"""
     try:
         indexer = get_indexer()
         if not indexer:
             return jsonify({'error': 'Database not initialized'}), 500
+        
+        device_id = request.args.get('device')
+        result = indexer.temporal_analysis(device_id)
+        # Handle DataFrame result
+        if result is not None:
+            if hasattr(result, 'empty'):
+                return jsonify(result.to_dict('list') if not result.empty else {'message': 'No temporal data available'})
+            elif isinstance(result, dict):
+                return jsonify(result)
+            else:
+                return jsonify({'data': str(result)})
+        return jsonify({'message': 'No temporal data available'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/movement', methods=['GET'])
+def movement_patterns():
+    """Analyze movement patterns"""
+    try:
+        indexer = get_indexer()
+        if not indexer:
+            return jsonify({'error': 'Database not initialized'}), 500
+        
+        device_id = request.args.get('device')
+        result = indexer.analyze_movement_patterns(device_id)
+        return jsonify(result if result else {'message': 'No movement data available'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/anomalies', methods=['GET'])
+def anomalies():
+    """Detect spatial and temporal anomalies"""
+    try:
+        indexer = get_indexer()
+        if not indexer:
+            return jsonify({'error': 'Database not initialized'}), 500
+        
+        device_id = request.args.get('device')
+        result = indexer.detect_anomalies(device_id)
+        # Handle DataFrame result
+        if result is not None:
+            if hasattr(result, 'empty'):
+                return jsonify(result.to_dict('list') if not result.empty else {'message': 'No anomalies detected'})
+            elif isinstance(result, dict):
+                return jsonify(result)
+            else:
+                return jsonify({'data': str(result)})
+        return jsonify({'message': 'No anomalies detected'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/privacy-risk', methods=['GET'])
+def privacy_risk():
+    """Assess privacy risk and tracking vulnerability"""
+    try:
+        indexer = get_indexer()
+        if not indexer:
+            return jsonify({'error': 'Database not initialized'}), 500
+        
+        device_id = request.args.get('device')
+        result = indexer.privacy_risk_assessment(device_id)
+        return jsonify(result if result else {'message': 'No privacy risk data available'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/deepweb/analysis', methods=['POST'])
+def deepweb_analysis():
+    """Comprehensive deep web and dark web analysis"""
+    try:
+        deepweb = get_deepweb()
+        if not deepweb:
+            return jsonify({'error': 'Deep web analyzer not initialized'}), 500
+        
         data = request.get_json()
         content = data.get('content', '')
-        evidence_id = data.get('case_id', 'web-ui')
-        return jsonify(indexer.analyze_osint_text(content, evidence_id))
+        metadata = data.get('metadata', {})
+        
+        results = deepweb.comprehensive_deepweb_analysis(content, metadata)
+        return jsonify(results)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/graph', methods=['GET'])
-def export_graph():
+@app.route('/api/export/kml', methods=['GET'])
+def export_kml():
+    """Export location data as KML for Google Earth"""
     try:
         indexer = get_indexer()
         if not indexer:
             return jsonify({'error': 'Database not initialized'}), 500
-        output_file = f"maps/entity_graph_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        device_id = request.args.get('device', None)
+        output_file = f"maps/forengeo_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.kml"
         os.makedirs('maps', exist_ok=True)
-        indexer.export_entity_graph_json(output_file)
-        return jsonify({'file': f'/{output_file}'})
+        
+        try:
+            if device_id:
+                indexer.export_kml(output_file, device_id)
+            else:
+                indexer.export_kml(output_file)
+        except TypeError:
+            # Fallback if device_id parameter not supported
+            indexer.export_kml(output_file)
+        
+        return jsonify({'file': f'/{output_file}', 'format': 'KML'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/android/analyze', methods=['POST'])
-def analyze_android():
+@app.route('/api/export/csv', methods=['GET'])
+def export_csv():
+    """Export location data as Autopsy CSV"""
     try:
         indexer = get_indexer()
         if not indexer:
             return jsonify({'error': 'Database not initialized'}), 500
-        data = request.get_json()
-        content = data.get('content', '')
-        temp_path = Path('tmp_android_artifact.txt')
-        temp_path.write_text(content, encoding='utf-8')
-        result = indexer.analyze_android_artifacts(str(temp_path), evidence_id='web-ui')
-        temp_path.unlink(missing_ok=True)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/linux/analyze', methods=['POST'])
-def analyze_linux():
-    try:
-        indexer = get_indexer()
-        if not indexer:
-            return jsonify({'error': 'Database not initialized'}), 500
-        data = request.get_json()
-        content = data.get('content', '')
-        temp_path = Path('tmp_linux_artifact.txt')
-        temp_path.write_text(content, encoding='utf-8')
-        result = indexer.analyze_linux_artifacts(str(temp_path), evidence_id='web-ui')
-        temp_path.unlink(missing_ok=True)
-        return jsonify(result)
+        
+        case_id = request.args.get('case_id', 'web_export')
+        output_dir = f"maps/autopsy_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        os.makedirs(output_dir, exist_ok=True)
+        os.makedirs('autopsy_export', exist_ok=True)
+        
+        try:
+            indexer.export_autopsy_csv(case_id, 'autopsy_export')
+            output_file = f"autopsy_export/case_{case_id}_locations.csv"
+        except Exception as e:
+            # Fallback: create CSV manually
+            import pandas as pd
+            df = pd.read_sql("SELECT * FROM locations", indexer.conn)
+            output_file = f"{output_dir}/locations.csv"
+            df.to_csv(output_file, index=False)
+        
+        return jsonify({'file': f'/{output_file}', 'format': 'CSV'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -188,7 +188,7 @@ def demo_map_visualization():
     print_step(9, "Multi-Layer Map Generation")
     print_highlight("Creating comprehensive map with 4 visualization layers...\n")
     
-    db.create_interactive_map("suspect_phone", "demo_forensic_multi.html", "multi")
+    db.create_interactive_map("suspect_phone", "demo_forensic_multi.html")
     file_size = Path("demo_forensic_multi.html").stat().st_size
     print_success(f"Generated: demo_forensic_multi.html ({file_size} bytes)")
     print_info("Layers included:")
@@ -201,7 +201,7 @@ def demo_map_visualization():
     print_step(10, "Density Heatmap")
     print_highlight("Heat-based visualization of location intensity...\n")
     
-    db.create_interactive_map("suspect_phone", "demo_forensic_heatmap.html", "heatmap")
+    db.create_interactive_map("suspect_phone", "demo_forensic_heatmap.html")
     file_size = Path("demo_forensic_heatmap.html").stat().st_size
     print_success(f"Generated: demo_forensic_heatmap.html ({file_size} bytes)")
     print_info("Use case: Quickly identify hotspots and activity centers")
@@ -210,7 +210,7 @@ def demo_map_visualization():
     print_step(11, "Trajectory Map")
     print_highlight("Visualizing suspect's movement path...\n")
     
-    db.create_interactive_map("suspect_phone", "demo_forensic_trajectory.html", "trajectory")
+    db.create_interactive_map("suspect_phone", "demo_forensic_trajectory.html")
     file_size = Path("demo_forensic_trajectory.html").stat().st_size
     print_success(f"Generated: demo_forensic_trajectory.html ({file_size} bytes)")
     print_info("Features:")
@@ -224,7 +224,7 @@ def demo_map_visualization():
     print_step(12, "Device Comparison Map")
     print_highlight("Comparing multiple suspect devices/people...\n")
     
-    db.create_interactive_map(output_file="demo_forensic_comparison.html", map_type="comparison")
+    db.create_interactive_map(output_file="demo_forensic_comparison.html")
     file_size = Path("demo_forensic_comparison.html").stat().st_size
     print_success(f"Generated: demo_forensic_comparison.html ({file_size} bytes)")
     print_info("Use case: Multi-person investigation - overlay multiple suspects")

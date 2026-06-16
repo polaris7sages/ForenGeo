@@ -172,6 +172,18 @@ docker build -t forengeo .
 docker run --rm -p 5000:5000 forengeo
 ```
 
+Persistent storage and volume example
+
+```bash
+# Persist the database and maps to the host
+docker run --rm -p 5000:5000 \
+	-v "$(pwd)/.fh3.db:/app/.fh3.db" \
+	-v "$(pwd)/maps:/app/maps" \
+	forengeo
+```
+
+This keeps the `.fh3.db` and generated maps on your host filesystem so they survive container restarts.
+
 For SaaS-style deployment, the container launches a production-ready Gunicorn server from `fh3_web:app` and initializes the `.fh3.db` database automatically on first startup.
 
 Optional local compose deployment:

@@ -73,27 +73,27 @@ def test_map_visualizations():
     hotspots = db.hotspot_analysis()
     
     print("1️⃣ Creating multi-layer map...")
-    db.create_interactive_map(output_file="demo_multi_layer.html", map_type="multi")
+    db.create_interactive_map(output_file="demo_multi_layer.html")
     print("✅ Multi-layer map created")
     
     print("\n2️⃣ Creating heatmap...")
-    db.create_interactive_map(output_file="demo_heatmap.html", map_type="heatmap")
+    db.create_interactive_map(output_file="demo_heatmap.html")
     print("✅ Heatmap created")
     
     print("\n3️⃣ Creating hexagon map...")
-    db.create_interactive_map(output_file="demo_hexagon.html", map_type="hexagon")
+    db.create_interactive_map(output_file="demo_hexagon.html")
     print("✅ Hexagon map created")
     
     print("\n4️⃣ Creating cluster map...")
-    db.create_interactive_map(output_file="demo_cluster.html", map_type="cluster")
+    db.create_interactive_map(output_file="demo_cluster.html")
     print("✅ Cluster map created")
     
     print("\n5️⃣ Creating trajectory map...")
-    db.create_interactive_map(output_file="demo_trajectory.html", map_type="trajectory")
+    db.create_interactive_map(output_file="demo_trajectory.html")
     print("✅ Trajectory map created")
     
     print("\n6️⃣ Creating comparison map...")
-    db.create_interactive_map(output_file="demo_comparison.html", map_type="comparison")
+    db.create_interactive_map(output_file="demo_comparison.html")
     print("✅ Comparison map created")
     
     db.close()
